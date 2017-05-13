@@ -23,9 +23,9 @@ EMBEDDING_DIM = 100
 VALIDATION_SPLIT = 0.1
 
 # [1] build index mapping words in the embeddings set to their embedding vector
-'''
 print('Indexing word vectors.')
 
+'''
 embeddings_index = {}
 f = open(GLOVE_LOC)
 for line in f:
@@ -34,7 +34,6 @@ for line in f:
     coefs = np.asarray(values[1:], dtype='float32')
     embeddings_index[word] = coefs
 f.close()
-
 print('Found %s word vectors.' % len(embeddings_index))
 '''
 
@@ -51,17 +50,18 @@ for file_name in sorted(os.listdir(TEXT_DATA_DIR)):
     if author_name not in labels_index:
         label_id = len(labels_index)
         labels_index[author_name] = label_id
-        labels.append(label_id);
+
     label_id = labels_index[author_name]
+    labels.append(label_id)
 
     #open file, read each line
     with open(os.path.join(TEXT_DATA_DIR, file_name)) as f:
-        lines = f.readlines();
+        lines = f.readlines()
         lines = [x.strip() for x in lines]
     text = ''
     for line in lines:
         text += line
-    texts.append(text);
+    texts.append(text)
 
 print('Found %s texts.' % len(texts))
 
@@ -78,14 +78,18 @@ labels = to_categorical(np.asarray(labels))
 print('Shape of data tensor:', data.shape)
 print('Shape of label tensor:', labels.shape)
 
-# [4] split the data into a training set and a validation set
-indices = np.arange(data.shape[0])
-np.random.shuffle(indices)
-data = data[indices]
-labels = labels[indices]
-num_validation_samples = int(VALIDATION_SPLIT * data.shape[0])
+np.save('rcv1.data', data)
+np.save('rcv1.label', labels)
 
-x_train = data[:-num_validation_samples]
-y_train = labels[:-num_validation_samples]
-x_val = data[-num_validation_samples:]
-y_val = labels[-num_validation_samples:]
+# [4] split the data into a training set and a validation set
+#indices = np.arange(data.shape[0])
+#np.random.shuffle(indices)
+#data = data[indices]
+#labels = labels[indices]
+#num_validation_samples = int(VALIDATION_SPLIT * data.shape[0])
+
+#x_train = data[:-num_validation_samples]
+#y_train = labels[:-num_validation_samples]
+#x_val = data[-num_validation_samples:]
+#y_val = labels[-num_validation_samples:]
+
