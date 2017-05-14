@@ -74,12 +74,12 @@ print('Found %s unique tokens.' % len(word_index))
 
 data = pad_sequences(sequences, maxlen=MAX_SEQUENCE_LENGTH)
 
-labels = to_categorical(np.asarray(labels))
+#labels = to_categorical(np.asarray(labels))
 print('Shape of data tensor:', data.shape)
 print('Shape of label tensor:', labels.shape)
 
-np.save('rcv1.data', data)
-np.save('rcv1.label', labels)
+#np.save('rcv1.data', data)
+#np.save('rcv1.label', labels)
 
 # [4] split the data into a training set and a validation set
 #indices = np.arange(data.shape[0])
