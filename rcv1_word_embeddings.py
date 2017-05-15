@@ -24,6 +24,10 @@ from keras.layers import Dense, Input, Flatten
 from keras.layers import Conv1D, MaxPooling1D, Embedding
 from keras.models import Model
 
+import pickle
+
+import theano
+theano.config.openmp = True
 
 BASE_DIR = './data'
 GLOVE_DIR = BASE_DIR + '/glove/'
@@ -146,7 +150,28 @@ model.compile(loss='categorical_crossentropy',
               optimizer='rmsprop',
               metrics=['acc'])
 
-model.fit(x_train, y_train,
-          batch_size=128,
-          epochs=10,
-          validation_data=(x_val, y_val))
+stopCondition = False
+prev_acc = 0
+while not stopCondition:
+    model.fit(x_train, y_train,
+              batch_size=128,
+              epochs=2,
+              validation_data=(x_val, y_val))
+
+    score, acc = model.evaluate(x_val, y_val,
+                                batch_size=128)
+    print('Test score:', score)
+    print('Test accuracy:', acc)
+    relativeErr = abs(acc - prev_acc)/prev_acc
+    print('relative error:', relativeErr)
+    stopCondition = (relativeErr <= 0.01)
+    prev_acc = acc
+
+# serialize model to JSON
+model_json = model.to_json()
+with open("rcv1.cnn.model.json", "w") as json_file:
+    json_file.write(model_json)
+# serialize weights to HDF5
+pickle.dump(model.get_weights(), open("rcv1.cnn.pickle", "wb"))
+
+print("Saved model to disk")
