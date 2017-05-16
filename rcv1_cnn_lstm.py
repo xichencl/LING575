@@ -20,7 +20,7 @@ import random
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
-from keras.layers import Dense, Input, Flatten, LSTM
+from keras.layers import Dense, Input, Flatten, LSTM,Dropout
 from keras.layers import Conv1D, MaxPooling1D, Embedding
 from keras.models import Model
 
@@ -36,6 +36,12 @@ MAX_SEQUENCE_LENGTH = 1000
 MAX_NB_WORDS = 20000
 EMBEDDING_DIM = 100
 VALIDATION_SPLIT = 0.2
+
+# Convolution
+kernel_size = 5
+filters = 64
+pool_size = 4
+
 
 # second, prepare text samples and their labels
 print('Processing text dataset')
@@ -135,7 +141,11 @@ print('Training model.')
 # train a 1D convnet with global maxpooling
 sequence_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences = embedding_layer(sequence_input)
-x = LSTM(128, dropout=0.2, recurrent_dropout=0.2)(embedded_sequences)
+x = Dropout(0.25)(embedded_sequences)
+x = Conv1D(filters,kernel_size,padding='valid',activation='relu',strides=1)(x)
+x = MaxPooling1D(pool_size=pool_size)(x)
+x = LSTM(128)(x)
+x = Dense(128, activation='relu')(x)
 preds = Dense(len(labels_index), activation='softmax')(x)
 
 model = Model(sequence_input, preds)
@@ -162,9 +172,9 @@ while not stopCondition:
 
 # serialize model to JSON
 model_json = model.to_json()
-with open("rcv1.lstm.model.json", "w") as json_file:
+with open("rcv1.cnn_lstm.model.json", "w") as json_file:
     json_file.write(model_json)
 # serialize weights to HDF5
-pickle.dump(model.get_weights(), open("rcv1.lstm.pickle", "wb"))
+pickle.dump(model.get_weights(), open("rcv1.cnn_lstm.pickle", "wb"))
 
 print("Saved model to disk")
