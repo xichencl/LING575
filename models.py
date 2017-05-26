@@ -10,7 +10,7 @@ pool_size = 4
 
 def build_model(type, embedded_sequences, labels_index, sequence_input):
 
-    if type == 'CNN':
+    if type == 'cnn':
         x = Conv1D(128, 5, activation='relu')(embedded_sequences)
         x = MaxPooling1D(5)(x)
         x = Dropout(0.2)(x)
@@ -29,7 +29,7 @@ def build_model(type, embedded_sequences, labels_index, sequence_input):
                       optimizer='rmsprop',
                       metrics=['acc'])
 
-    if type == 'LSTM':
+    if type == 'lstm':
         x = LSTM(128, dropout=0.2, recurrent_dropout=0.2)(embedded_sequences)
         preds = Dense(len(labels_index), activation='softmax')(x)
 
@@ -38,7 +38,7 @@ def build_model(type, embedded_sequences, labels_index, sequence_input):
                       optimizer='rmsprop',
                       metrics=['acc'])
 
-    if type == 'CNN_LSTM':
+    if type == 'cnn_lstm':
         x = Dropout(0.25)(embedded_sequences)
         x = Conv1D(filters, kernel_size, padding='valid', activation='relu', strides=1)(x)
         x = MaxPooling1D(pool_size=pool_size)(x)

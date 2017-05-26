@@ -107,6 +107,26 @@ def prepEmbeddingMatrix():
                                 trainable=False)
     return embedding_layer
 
+
+
+import argparse
+parser = argparse.ArgumentParser("NN for NLP")
+parser.add_argument("-network", help="NN type: cnn, lstm, cnn_lstm")
+parser.add_argument("-corpus", help="training corpus: rcv1, enron")
+
+args = parser.parse_args()
+
+possible_network = ['cnn', 'lstm', 'cnn_lstm']
+possible_corpus  = ['rcv1', 'enron']
+if args.network not in possible_network:
+    raise ValueError('not supported network type')
+if args.corpus not in possible_corpus:
+    raise ValueError('not supported corpus type')
+
+NETWORK_TYPE = args.network
+CORPUS_TYPE = args.corpus
+
+
 BASE_DIR = './data'
 GLOVE_DIR = BASE_DIR + '/glove/'
 TEXT_DATA_DIR = BASE_DIR + '/rcv1/all/'
@@ -131,7 +151,7 @@ embedding_layer = prepEmbeddingMatrix()
 
 sequence_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences = embedding_layer(sequence_input)
-model = models.build_model('CNN', embedded_sequences, labels_index, sequence_input)
+model = models.build_model(NETWORK_TYPE, embedded_sequences, labels_index, sequence_input)
 
 print('Training model.')
 
@@ -154,10 +174,10 @@ while not stopCondition:
 
 # serialize model to JSON
 model_json = model.to_json()
-with open("rcv1.cnn.model.json", "w") as json_file:
+with open(CORPUS_TYPE + NETWORK_TYPE + ".model.json", "w") as json_file:
     json_file.write(model_json)
 # serialize weights
-pickle.dump(model.get_weights(), open("rcv1.cnn.pickle", "wb"))
+pickle.dump(model.get_weights(), open(CORPUS_TYPE + NETWORK_TYPE + "weight.pickle", "wb"))
 
 print("Saved model to disk")
 
