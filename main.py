@@ -23,10 +23,11 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
 from keras.models import Model,Input
 from keras.layers import Embedding
+from keras.callbacks import EarlyStopping
 
 import pickle
 import theano
-#theano.config.openmp = True
+theano.config.openmp = True
 
 
 def load_text():
@@ -116,7 +117,7 @@ parser.add_argument("-corpus", help="training corpus: rcv1, enron")
 
 args = parser.parse_args()
 
-possible_network = ['cnn', 'lstm', 'cnn_lstm']
+possible_network = ['cnn', 'lstm', 'cnn_lstm', 'cnn_simple']
 possible_corpus  = ['rcv1', 'enron']
 if args.network not in possible_network:
     raise ValueError('not supported network type')
@@ -155,29 +156,22 @@ model = models.build_model(NETWORK_TYPE, embedded_sequences, labels_index, seque
 
 print('Training model.')
 
-stopCondition = False
-prev_acc = 0
-while not stopCondition:
-    model.fit(x_train, y_train,
-              batch_size=128,
-              epochs=2,
-              validation_data=(x_val, y_val))
+_callbacks = [
+    EarlyStopping(monitor='val_loss', patience=2, verbose=0),
+    #ModelCheckpoint(kfold_weights_path, monitor='val_loss', save_best_only=True, verbose=0),
+]
 
-    score, acc = model.evaluate(x_val, y_val,
-                                batch_size=128)
-    print('Test score:', score)
-    print('Test accuracy:', acc)
-    relativeErr = abs(acc - prev_acc)/prev_acc
-    print('relative error:', relativeErr)
-    stopCondition = (relativeErr <= 0.01)
-    prev_acc = acc
+model.fit(x_train, y_train,
+          batch_size=128,
+          epochs=1000,
+          validation_data=(x_val, y_val), callbacks = _callbacks)
 
 # serialize model to JSON
 model_json = model.to_json()
 with open(CORPUS_TYPE + NETWORK_TYPE + ".model.json", "w") as json_file:
     json_file.write(model_json)
 # serialize weights
-pickle.dump(model.get_weights(), open(CORPUS_TYPE + NETWORK_TYPE + "weight.pickle", "wb"))
+pickle.dump(model.get_weights(), open(CORPUS_TYPE + NETWORK_TYPE + ".weight.pickle", "wb"))
 
 print("Saved model to disk")
 

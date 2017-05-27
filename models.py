@@ -1,6 +1,6 @@
 
-from keras.layers import Dense, Flatten, Dropout
-from keras.layers import Conv1D, MaxPooling1D, LSTM
+from keras.layers import Dense, Flatten, Dropout, Bidirectional
+from keras.layers import Conv1D, MaxPooling1D, LSTM, GlobalMaxPooling1D
 from keras.models import Model
 
 # Convolution Parameters
@@ -11,7 +11,8 @@ pool_size = 4
 def build_model(type, embedded_sequences, labels_index, sequence_input):
 
     if type == 'cnn':
-        x = Conv1D(128, 5, activation='relu')(embedded_sequences)
+        x = Dropout(0.2)(embedded_sequences)
+        x = Conv1D(128, 5, activation='relu')(x)
         x = MaxPooling1D(5)(x)
         x = Dropout(0.2)(x)
         x = Conv1D(128, 5, activation='relu')(x)
@@ -26,29 +27,41 @@ def build_model(type, embedded_sequences, labels_index, sequence_input):
         preds = Dense(len(labels_index), activation='softmax')(x)
         _model = Model(sequence_input, preds)
         _model.compile(loss='categorical_crossentropy',
-                      optimizer='rmsprop',
+                       optimizer='adam',
+                      metrics=['acc'])
+
+    if type == 'cnn_simple':
+        x = Dropout(0.2)(embedded_sequences)
+        x = Conv1D(filters, kernel_size, padding='valid', activation='relu', strides=1)(x)
+        x = GlobalMaxPooling1D()(x)
+        x = Dense(128, activation='relu')(x)
+        x = Dropout(0.2)(x)
+        preds = Dense(len(labels_index), activation='softmax')(x)
+        _model = Model(sequence_input, preds)
+        _model.compile(loss='categorical_crossentropy',
+                       optimizer='adam',
                       metrics=['acc'])
 
     if type == 'lstm':
-        x = LSTM(128, dropout=0.2, recurrent_dropout=0.2)(embedded_sequences)
+        x = Dropout(0.2)(embedded_sequences)
+        x = Bidirectional(LSTM(64, dropout=0.2, recurrent_dropout=0.2))(x)
         preds = Dense(len(labels_index), activation='softmax')(x)
 
-        model = Model(sequence_input, preds)
-        model.compile(loss='categorical_crossentropy',
-                      optimizer='rmsprop',
+        _model = Model(sequence_input, preds)
+        _model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
                       metrics=['acc'])
 
     if type == 'cnn_lstm':
-        x = Dropout(0.25)(embedded_sequences)
+        x = Dropout(0.2)(embedded_sequences)
         x = Conv1D(filters, kernel_size, padding='valid', activation='relu', strides=1)(x)
         x = MaxPooling1D(pool_size=pool_size)(x)
-        x = LSTM(128)(x)
-        x = Dense(128, activation='relu')(x)
+        x = Bidirectional(LSTM(64, dropout=0.2, recurrent_dropout=0.2))(x)
         preds = Dense(len(labels_index), activation='softmax')(x)
 
-        model = Model(sequence_input, preds)
-        model.compile(loss='categorical_crossentropy',
-                      optimizer='rmsprop',
+        _model = Model(sequence_input, preds)
+        _model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
                       metrics=['acc'])
 
     return _model
